@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – TollGuru India</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #5b4fcf;
+      --primary2: #7c3aed;
+      --accent: #f59e0b;
+      --bg: #f1f0fb;
+      --card: #ffffff;
+      --text: #1e1b4b;
+      --muted: #6b7280;
+      --border: #e2e0f5;
+      --success: #10b981;
+      --danger: #ef4444;
+      --radius: 18px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Navbar */
+    .navbar { background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); box-shadow: 0 2px 20px rgba(91,79,207,0.08); position: sticky; top: 0; z-index: 1000; }
+    .nav-container { max-width: 1280px; margin: 0 auto; padding: 0.7rem 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--primary2)); -webkit-background-clip: text; background-clip: text; color: transparent; display: flex; align-items: center; gap: 0.4rem; }
+    .nav-links { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-weight: 600; padding: 0.45rem 0.9rem; border-radius: 10px; font-size: 0.88rem; transition: all 0.2s; }
+    .nav-links a:hover, .nav-links a.active { background: linear-gradient(135deg, var(--primary), var(--primary2)); color: white; }
+
+    /* Page header */
+    .page-header { background: linear-gradient(135deg, var(--primary), var(--primary2)); color: white; padding: 2.5rem 1.2rem; }
+    .page-header h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; }
+    .page-header p { opacity: 0.85; margin-top: 0.3rem; }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1.2rem; }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--card); border-radius: var(--radius); padding: 1.2rem 1rem; text-align: center; box-shadow: 0 4px 15px rgba(91,79,207,0.08); border: 1px solid var(--border); }
+    .stat-card .icon { font-size: 1.6rem; margin-bottom: 0.4rem; }
+    .stat-card .val { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+    .stat-card .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+
+    /* Trip list */
+    .card { background: var(--card); border-radius: var(--radius); padding: 1.5rem; box-shadow: 0 4px 15px rgba(91,79,207,0.08); border: 1px solid var(--border); }
+    .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .trip-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.9rem 0; border-bottom: 1px solid var(--border);
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .trip-item:last-child { border-bottom: none; }
+    .trip-route { font-weight: 700; font-size: 0.95rem; }
+    .trip-meta { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+    .trip-cost { font-weight: 800; color: var(--primary); font-size: 1.05rem; white-space: nowrap; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-purple { background: #ede9fe; color: var(--primary); }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 0.8rem; display: block; }
+    .btn { padding: 0.65rem 1.2rem; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.88rem; border: none; font-family: inherit; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary2)); color: white; }
+    .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; }
+    .btn-danger:hover { background: var(--danger); color: white; }
+
+    .login-prompt { text-align: center; padding: 3rem 1rem; }
+    .login-prompt i { font-size: 3rem; color: var(--primary); margin-bottom: 1rem; display: block; }
+    .login-prompt p { color: var(--muted); margin-bottom: 1.2rem; }
+
+    .filter-row { display: flex; gap: 0.6rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-btn { padding: 0.4rem 0.9rem; border-radius: 20px; border: 1.5px solid var(--border); background: white; cursor: pointer; font-size: 0.82rem; font-weight: 600; font-family: inherit; color: var(--muted); transition: all 0.2s; }
+    .filter-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+    footer { background: var(--text); color: rgba(255,255,255,0.6); text-align: center; padding: 1.5rem; margin-top: 3rem; font-size: 0.83rem; }
+
+    @media (max-width: 640px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo"><i class="fas fa-road" style="color:var(--primary2)"></i> Toll<span style="color:var(--accent)">Guru</span></div>
+      <div class="nav-links">
+        <a href="index.html"><i class="fas fa-home"></i> Home</a>
+        <a href="dashboard.html" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i> Admin</a>
+        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container" style="padding-top:0;padding-bottom:0;">
+      <h1><i class="fas fa-chart-line"></i> My Dashboard</h1>
+      <p id="welcomeText">View and manage your saved trips</p>
+    </div>
+  </div>
+
+  <div class="container" id="mainContent">
+    <!-- injected by JS -->
+  </div>
+
+  <footer><p>© 2026 TollGuru India · Affiliated by LUKEA</p></footer>
+
+  <script>
+    'use strict';
+    let currentUser = null;
+
+    function checkAuth() {
+      try {
+        const saved = localStorage.getItem('tollguru_user');
+        if (saved) currentUser = JSON.parse(saved);
+      } catch(e) { localStorage.removeItem('tollguru_user'); }
+    }
+
+    function getTrips() {
+      if (!currentUser) return [];
+      try {
+        return JSON.parse(localStorage.getItem('trips_' + currentUser.email) || '[]');
+      } catch(e) { return []; }
+    }
+
+    function deleteTrip(index) {
+      const trips = getTrips();
+      trips.splice(index, 1);
+      localStorage.setItem('trips_' + currentUser.email, JSON.stringify(trips));
+      renderDashboard();
+    }
+
+    function clearAllTrips() {
+      if (!confirm('Delete all saved trips?')) return;
+      localStorage.removeItem('trips_' + currentUser.email);
+      renderDashboard();
+    }
+
+    function formatDate(iso) {
+      try {
+        return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch(e) { return '—'; }
+    }
+
+    function renderDashboard() {
+      const content = document.getElementById('mainContent');
+
+      if (!currentUser) {
+        content.innerHTML =
+          '<div class="login-prompt">' +
+            '<i class="fas fa-lock"></i>' +
+            '<h2 style="margin-bottom:0.5rem;">Login to view your dashboard</h2>' +
+            '<p>Save trips and track your travel spend across India.</p>' +
+            '<a href="index.html" class="btn btn-primary" style="text-decoration:none;display:inline-block;">← Go to Calculator</a>' +
+          '</div>';
+        return;
+      }
+
+      document.getElementById('welcomeText').textContent = 'Welcome back, ' + currentUser.email.split('@')[0] + '!';
+      if (currentUser.email === 'admin@tollguru.com') {
+        document.getElementById('adminLink').style.display = 'inline';
+      }
+
+      const trips = getTrips();
+      const totalSpent = trips.reduce((s, t) => s + (t.totalCost || 0), 0);
+      const totalKm = trips.reduce((s, t) => s + parseFloat(t.distance || 0), 0);
+      const avgCost = trips.length > 0 ? Math.round(totalSpent / trips.length) : 0;
+
+      const statsHtml =
+        '<div class="stats-row">' +
+          '<div class="stat-card"><div class="icon">🗺️</div><div class="val">' + trips.length + '</div><div class="lbl">Total Trips</div></div>' +
+          '<div class="stat-card"><div class="icon">💰</div><div class="val">₹' + totalSpent + '</div><div class="lbl">Total Toll Spent</div></div>' +
+          '<div class="stat-card"><div class="icon">📍</div><div class="val">' + totalKm.toFixed(0) + ' km</div><div class="lbl">Distance Covered</div></div>' +
+          '<div class="stat-card"><div class="icon">📊</div><div class="val">₹' + avgCost + '</div><div class="lbl">Avg Toll / Trip</div></div>' +
+        '</div>';
+
+      let listHtml = '';
+      if (trips.length === 0) {
+        listHtml =
+          '<div class="empty-state">' +
+            '<i class="fas fa-route"></i>' +
+            '<p>No trips saved yet. Calculate a route on the home page and click "Save This Trip"!</p>' +
+            '<a href="index.html" class="btn btn-primary" style="text-decoration:none;display:inline-block;margin-top:0.8rem;">Calculate a Route</a>' +
+          '</div>';
+      } else {
+        const rows = trips.map((t, i) =>
+          '<div class="trip-item">' +
+            '<div>' +
+              '<div class="trip-route">' + (t.from || '?') + ' → ' + (t.to || '?') + '</div>' +
+              '<div class="trip-meta">' +
+                formatDate(t.timestamp || t.date) + ' &nbsp;·&nbsp; ' +
+                (t.distance || '?') + ' km &nbsp;·&nbsp; ' +
+                (t.tollsCount || '?') + ' plazas &nbsp;' +
+                '<span class="badge badge-purple">Saved</span>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:0.8rem;">' +
+              '<div class="trip-cost">₹' + (t.totalCost || 0) + '</div>' +
+              '<button class="btn btn-danger" onclick="deleteTrip(' + i + ')"><i class="fas fa-trash"></i></button>' +
+            '</div>' +
+          '</div>'
+        ).join('');
+
+        listHtml =
+          '<div class="card" style="margin-top:1rem;">' +
+            '<div class="card-title">' +
+              '<i class="fas fa-history"></i> Trip History' +
+              '<button class="btn btn-danger" style="margin-left:auto;font-size:0.78rem;" onclick="clearAllTrips()"><i class="fas fa-trash"></i> Clear All</button>' +
+            '</div>' +
+            rows +
+          '</div>';
+      }
+
+      content.innerHTML = statsHtml + listHtml;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('tollguru_user');
+      window.location.href = 'index.html';
+    });
+
+    checkAuth();
+    renderDashboard();
+  </script>
+</body>
+</html>

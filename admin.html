@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel – TollGuru India</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #5b4fcf; --primary2: #7c3aed; --accent: #f59e0b;
+      --bg: #f1f0fb; --card: #fff; --text: #1e1b4b; --muted: #6b7280;
+      --border: #e2e0f5; --success: #10b981; --danger: #ef4444; --radius: 18px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    .navbar { background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); box-shadow: 0 2px 20px rgba(91,79,207,0.08); position: sticky; top: 0; z-index: 1000; }
+    .nav-container { max-width: 1280px; margin: 0 auto; padding: 0.7rem 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--primary2)); -webkit-background-clip: text; background-clip: text; color: transparent; display: flex; align-items: center; gap: 0.4rem; }
+    .nav-links { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-weight: 600; padding: 0.45rem 0.9rem; border-radius: 10px; font-size: 0.88rem; transition: all 0.2s; }
+    .nav-links a:hover, .nav-links a.active { background: linear-gradient(135deg, var(--primary), var(--primary2)); color: white; }
+
+    .page-header { background: linear-gradient(135deg, #1e1b4b, #312e81); color: white; padding: 2.5rem 1.2rem; }
+    .page-header h1 { font-size: clamp(1.6rem, 4vw, 2rem); font-weight: 800; }
+    .page-header p { opacity: 0.75; margin-top: 0.3rem; font-size: 0.9rem; }
+    .admin-badge { display: inline-block; background: #f59e0b; color: #1c1917; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 0.5rem; vertical-align: middle; }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1.2rem; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--card); border-radius: var(--radius); padding: 1.2rem 1rem; text-align: center; box-shadow: 0 4px 15px rgba(91,79,207,0.08); border: 1px solid var(--border); }
+    .stat-card .icon { font-size: 1.6rem; margin-bottom: 0.4rem; }
+    .stat-card .val { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+    .stat-card .lbl { font-size: 0.77rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.2rem; margin-bottom: 1.5rem; }
+    .card { background: var(--card); border-radius: var(--radius); padding: 1.5rem; box-shadow: 0 4px 15px rgba(91,79,207,0.08); border: 1px solid var(--border); }
+    .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); display: flex; align-items: center; gap: 0.4rem; }
+
+    .user-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 0.5rem; }
+    .user-item:last-child { border-bottom: none; }
+    .user-email { font-weight: 600; font-size: 0.92rem; }
+    .user-meta { font-size: 0.78rem; color: var(--muted); }
+
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge-admin { background: #fef3c7; color: #92400e; }
+    .badge-user { background: #ede9fe; color: var(--primary); }
+    .badge-green { background: #d1fae5; color: #065f46; }
+
+    .route-row { display: flex; justify-content: space-between; padding: 0.7rem 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+    .route-row:last-child { border-bottom: none; }
+
+    .activity-log { max-height: 280px; overflow-y: auto; }
+    .log-item { display: flex; gap: 0.7rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.83rem; align-items: flex-start; }
+    .log-item:last-child { border-bottom: none; }
+    .log-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); margin-top: 0.3rem; flex-shrink: 0; }
+    .log-time { color: var(--muted); white-space: nowrap; }
+
+    .danger-zone { border: 1.5px solid #fca5a5; }
+    .danger-zone .card-title { color: var(--danger); }
+    .btn { padding: 0.65rem 1.2rem; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.88rem; border: none; font-family: inherit; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary2)); color: white; }
+    .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; }
+    .btn-danger:hover { background: var(--danger); color: white; }
+
+    .access-denied { text-align: center; padding: 4rem 1rem; }
+    .access-denied i { font-size: 3rem; color: var(--danger); margin-bottom: 1rem; display: block; }
+
+    footer { background: var(--text); color: rgba(255,255,255,0.6); text-align: center; padding: 1.5rem; margin-top: 3rem; font-size: 0.83rem; }
+
+    @media (max-width: 640px) { .stats-row { grid-template-columns: 1fr 1fr; } .grid2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo"><i class="fas fa-road" style="color:var(--primary2)"></i> Toll<span style="color:var(--accent)">Guru</span></div>
+      <div class="nav-links">
+        <a href="index.html"><i class="fas fa-home"></i> Home</a>
+        <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="admin.html" class="active"><i class="fas fa-shield-alt"></i> Admin</a>
+        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container" style="padding-top:0;padding-bottom:0;">
+      <h1><i class="fas fa-shield-alt"></i> Admin Panel <span class="admin-badge">RESTRICTED</span></h1>
+      <p>Site overview, user data, and system controls</p>
+    </div>
+  </div>
+
+  <div class="container" id="mainContent">
+    <!-- injected by JS -->
+  </div>
+
+  <footer><p>© 2026 TollGuru India · Admin Access Only</p></footer>
+
+  <script>
+    'use strict';
+    let currentUser = null;
+
+    function checkAuth() {
+      try {
+        const saved = localStorage.getItem('tollguru_user');
+        if (saved) currentUser = JSON.parse(saved);
+      } catch(e) { localStorage.removeItem('tollguru_user'); }
+    }
+
+    /* Gather all user data from localStorage (demo) */
+    function getAllUsers() {
+      const users = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('trips_')) {
+          const email = key.replace('trips_', '');
+          let trips = [];
+          try { trips = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+          users.push({ email, trips });
+        }
+      }
+      return users;
+    }
+
+    function formatDate(iso) {
+      try { return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); }
+      catch(e) { return '—'; }
+    }
+
+    function renderAdmin() {
+      const content = document.getElementById('mainContent');
+
+      if (!currentUser || currentUser.email !== 'admin@tollguru.com') {
+        content.innerHTML =
+          '<div class="access-denied">' +
+            '<i class="fas fa-ban"></i>' +
+            '<h2 style="margin-bottom:0.6rem;">Access Denied</h2>' +
+            '<p style="color:var(--muted);margin-bottom:1.2rem;">This page is only accessible to administrators.</p>' +
+            '<a href="index.html" class="btn btn-primary" style="text-decoration:none;">← Back to Home</a>' +
+          '</div>';
+        return;
+      }
+
+      const users = getAllUsers();
+      const totalTrips = users.reduce((s, u) => s + u.trips.length, 0);
+      const totalRevenue = users.reduce((s, u) => s + u.trips.reduce((ts, t) => ts + (t.totalCost || 0), 0), 0);
+      const totalKm = users.reduce((s, u) => s + u.trips.reduce((ts, t) => ts + parseFloat(t.distance || 0), 0), 0);
+
+      /* Popular routes count */
+      const routeCount = {};
+      users.forEach(u => u.trips.forEach(t => {
+        const key = (t.from || '?') + ' → ' + (t.to || '?');
+        routeCount[key] = (routeCount[key] || 0) + 1;
+      }));
+      const popularRoutes = Object.entries(routeCount).sort((a,b) => b[1]-a[1]).slice(0, 5);
+
+      /* Activity log (all trips sorted newest first) */
+      const allActivity = [];
+      users.forEach(u => u.trips.forEach(t => allActivity.push({ ...t, email: u.email })));
+      allActivity.sort((a,b) => new Date(b.timestamp||b.date||0) - new Date(a.timestamp||a.date||0));
+
+      const statsHtml =
+        '<div class="stats-row">' +
+          '<div class="stat-card"><div class="icon">👥</div><div class="val">' + users.length + '</div><div class="lbl">Registered Users</div></div>' +
+          '<div class="stat-card"><div class="icon">🗺️</div><div class="val">' + totalTrips + '</div><div class="lbl">Total Trips Saved</div></div>' +
+          '<div class="stat-card"><div class="icon">💰</div><div class="val">₹' + totalRevenue + '</div><div class="lbl">Total Toll Data</div></div>' +
+          '<div class="stat-card"><div class="icon">📍</div><div class="val">' + Math.round(totalKm) + '</div><div class="lbl">km Tracked</div></div>' +
+        '</div>';
+
+      /* User list */
+      const userRows = users.length === 0
+        ? '<p style="color:var(--muted);font-size:0.9rem;">No registered users yet.</p>'
+        : users.map(u =>
+          '<div class="user-item">' +
+            '<div>' +
+              '<div class="user-email">' + u.email +
+                (u.email === 'admin@tollguru.com' ? ' <span class="badge badge-admin">Admin</span>' : ' <span class="badge badge-user">User</span>') +
+              '</div>' +
+              '<div class="user-meta">' + u.trips.length + ' trips saved</div>' +
+            '</div>' +
+            '<div class="badge badge-green">Active</div>' +
+          '</div>'
+        ).join('');
+
+      /* Popular routes */
+      const routeRows = popularRoutes.length === 0
+        ? '<p style="color:var(--muted);font-size:0.9rem;">No trip data yet.</p>'
+        : popularRoutes.map(([route, count]) =>
+          '<div class="route-row"><span>' + route + '</span><span class="badge badge-user">' + count + 'x</span></div>'
+        ).join('');
+
+      /* Activity log */
+      const logRows = allActivity.slice(0, 20).length === 0
+        ? '<p style="color:var(--muted);font-size:0.9rem;">No activity yet.</p>'
+        : allActivity.slice(0, 20).map(a =>
+          '<div class="log-item">' +
+            '<div class="log-dot"></div>' +
+            '<div style="flex:1;">' + a.email + ' · <strong>' + (a.from||'?') + ' → ' + (a.to||'?') + '</strong> (₹' + (a.totalCost||0) + ')</div>' +
+            '<div class="log-time">' + formatDate(a.timestamp||a.date) + '</div>' +
+          '</div>'
+        ).join('');
+
+      const grid2Html =
+        '<div class="grid2">' +
+          '<div class="card"><div class="card-title"><i class="fas fa-users"></i> Users</div>' + userRows + '</div>' +
+          '<div class="card"><div class="card-title"><i class="fas fa-star"></i> Popular Routes</div>' + routeRows + '</div>' +
+        '</div>' +
+        '<div class="card" style="margin-bottom:1.2rem;"><div class="card-title"><i class="fas fa-clock"></i> Recent Activity</div><div class="activity-log">' + logRows + '</div></div>' +
+        '<div class="card danger-zone">' +
+          '<div class="card-title"><i class="fas fa-exclamation-triangle"></i> Danger Zone</div>' +
+          '<p style="font-size:0.88rem;color:var(--muted);margin-bottom:1rem;">These actions are irreversible. Use with caution.</p>' +
+          '<button class="btn btn-danger" onclick="clearAllData()"><i class="fas fa-trash"></i> Wipe All User Trip Data</button>' +
+        '</div>';
+
+      content.innerHTML = statsHtml + grid2Html;
+    }
+
+    window.clearAllData = function () {
+      if (!confirm('This will delete ALL user trip data permanently. Are you sure?')) return;
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('trips_')) keysToRemove.push(k);
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      alert('All user trip data wiped.');
+      renderAdmin();
+    };
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('tollguru_user');
+      window.location.href = 'index.html';
+    });
+
+    checkAuth();
+    renderAdmin();
+  </script>
+</body>
+</html>

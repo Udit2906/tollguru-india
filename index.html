@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
+  <title>TollGuru India – Live Toll Calculator & Route Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --primary: #5b4fcf;
+      --primary2: #7c3aed;
+      --accent: #f59e0b;
+      --bg: #f1f0fb;
+      --card: #ffffff;
+      --text: #1e1b4b;
+      --muted: #6b7280;
+      --border: #e2e0f5;
+      --success: #10b981;
+      --radius: 18px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 2px 20px rgba(91,79,207,0.08);
+      position: sticky; top: 0; z-index: 1000;
+    }
+    .nav-container {
+      max-width: 1280px; margin: 0 auto;
+      padding: 0.7rem 1.2rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .logo {
+      font-size: 1.4rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary2) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .logo .icon { background: none; color: var(--primary2); font-size: 1.2rem; }
+    .nav-links { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .nav-links a {
+      text-decoration: none; color: var(--muted); font-weight: 600;
+      padding: 0.45rem 0.9rem; border-radius: 10px; font-size: 0.88rem;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: white;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary2) 100%);
+      padding: 3rem 1rem 4.5rem;
+      text-align: center; color: white;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-content { position: relative; }
+    .hero-content h1 { font-size: clamp(2rem, 6vw, 3rem); font-weight: 800; margin-bottom: 0.6rem; }
+    .hero-content p { opacity: 0.85; font-size: 1.05rem; }
+    .gradient-text {
+      background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .stats-banner {
+      display: flex; justify-content: center; gap: 2.5rem; margin-top: 2rem; flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-number { display: block; font-size: 1.8rem; font-weight: 800; }
+    .stat-label { font-size: 0.82rem; opacity: 0.85; }
+
+    /* ── Container ── */
+    .container { max-width: 1280px; margin: 0 auto; padding: 1rem 1.2rem; }
+    .calculator-section { margin-top: -2.5rem; }
+
+    /* ── Calculator Card ── */
+    .calculator-card {
+      background: var(--card); border-radius: var(--radius);
+      padding: 1.8rem; box-shadow: 0 20px 50px rgba(91,79,207,0.12);
+    }
+    .calculator-card h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.2rem; color: var(--text); }
+    .search-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.8rem; align-items: end;
+    }
+    .input-group { position: relative; }
+    .input-group i {
+      position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%);
+      color: #a0aec0; font-size: 0.95rem; pointer-events: none;
+    }
+    .input-group input, .input-group select {
+      width: 100%; padding: 0.82rem 0.82rem 0.82rem 2.3rem;
+      border: 2px solid var(--border); border-radius: 12px;
+      font-size: 0.93rem; font-family: inherit; background: var(--bg);
+      color: var(--text); transition: border 0.2s, box-shadow 0.2s;
+    }
+    .input-group input:focus, .input-group select:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(91,79,207,0.1);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: white; border: none;
+      padding: 0.84rem 1rem; border-radius: 12px;
+      font-weight: 700; cursor: pointer; font-size: 0.93rem;
+      width: 100%; transition: transform 0.2s, opacity 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary:hover { transform: translateY(-2px); opacity: 0.93; }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* ── Loading ── */
+    .loading {
+      text-align: center; padding: 2.5rem; background: var(--card);
+      border-radius: var(--radius); margin-top: 1.5rem;
+      box-shadow: 0 10px 30px rgba(91,79,207,0.08);
+    }
+    .spinner {
+      border: 3px solid #ede9fe; border-top: 3px solid var(--primary);
+      border-radius: 50%; width: 42px; height: 42px;
+      animation: spin 0.9s linear infinite; margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results ── */
+    .result-card {
+      background: var(--card); border-radius: var(--radius);
+      padding: 1.8rem; margin-top: 1.5rem;
+      box-shadow: 0 10px 30px rgba(91,79,207,0.08);
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+
+    .summary-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.9rem; margin-bottom: 1.5rem;
+    }
+    .summary-item {
+      text-align: center; padding: 1rem 0.8rem;
+      background: var(--bg); border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+    .summary-item .label { display: block; font-size: 0.77rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .summary-item .value { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+
+    .breakdown-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
+    .toll-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 0.8rem; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap; gap: 0.3rem; font-size: 0.9rem;
+    }
+    .toll-item:last-child { border-bottom: none; }
+    .toll-price { font-weight: 700; color: var(--primary); }
+
+    .badge-save {
+      background: #ecfdf5; border: 1px solid #a7f3d0;
+      border-radius: 12px; padding: 0.9rem 1rem;
+      margin-top: 1.2rem; font-size: 0.88rem; color: #065f46;
+    }
+
+    .map-container {
+      height: 280px; border-radius: 14px;
+      margin: 1.3rem 0; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .save-btn-wrap { text-align: center; margin-top: 1rem; }
+
+    /* ── Popular Routes ── */
+    .popular-section { margin-top: 2.5rem; }
+    .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
+    .routes-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 0.9rem;
+    }
+    .route-card {
+      background: var(--card); padding: 1rem 0.9rem;
+      border-radius: 14px; cursor: pointer;
+      border: 2px solid var(--border);
+      transition: all 0.2s; text-align: center; font-size: 0.88rem;
+      font-weight: 600; color: var(--text);
+    }
+    .route-card:hover {
+      border-color: var(--primary); color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(91,79,207,0.12);
+    }
+    .route-card i { margin-right: 0.3rem; color: var(--primary); }
+    .route-card small { display: block; font-weight: 400; color: var(--muted); margin-top: 0.25rem; }
+
+    /* ── Modal ── */
+    .modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+      justify-content: center; align-items: center;
+      z-index: 2000; padding: 1rem;
+    }
+    .modal-content {
+      background: var(--card); padding: 2rem; border-radius: var(--radius);
+      width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+    }
+    .modal-content h2 { margin-bottom: 1.2rem; font-size: 1.2rem; }
+    .modal-content input {
+      display: block; width: 100%; padding: 0.8rem 1rem;
+      border: 2px solid var(--border); border-radius: 10px;
+      margin-bottom: 0.8rem; font-family: inherit; font-size: 0.93rem;
+      background: var(--bg); color: var(--text);
+    }
+    .modal-content input:focus { outline: none; border-color: var(--primary); }
+    .close {
+      float: right; font-size: 1.4rem; cursor: pointer;
+      color: var(--muted); line-height: 1;
+    }
+    .close:hover { color: var(--text); }
+    .modal-note { font-size: 0.78rem; color: var(--muted); margin-top: 0.8rem; }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--text); color: rgba(255,255,255,0.7);
+      text-align: center; padding: 1.5rem; margin-top: 3rem;
+      font-size: 0.83rem;
+    }
+    footer a { color: rgba(255,255,255,0.5); text-decoration: none; }
+
+    /* ── Error state ── */
+    .error-card {
+      background: #fef2f2; border: 1px solid #fca5a5;
+      border-radius: 14px; padding: 1.2rem; color: #991b1b;
+      font-size: 0.92rem; margin-top: 1rem;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .search-form { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .map-container { height: 220px; }
+      .routes-grid { grid-template-columns: 1fr 1fr; }
+      .hero { padding: 2rem 1rem 3.5rem; }
+    }
+    @media (pointer: coarse) {
+      .btn-primary, .nav-links a, .route-card { min-height: 44px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <i class="fas fa-road icon"></i>
+        <span>Toll<span style="color:var(--accent)">Guru</span></span>
+      </div>
+      <div class="nav-links">
+        <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
+        <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i> Admin</a>
+        <a href="#" id="authBtn"><i class="fas fa-user"></i> Login</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Live Toll Costs <span class="gradient-text">Across India</span></h1>
+      <p>Real-time route &amp; toll estimation — no sign-up required</p>
+      <div class="stats-banner">
+        <div class="stat"><span class="stat-number">70k+</span><span class="stat-label">Routes Simulated</span></div>
+        <div class="stat"><span class="stat-number">1200+</span><span class="stat-label">Toll Plazas</span></div>
+        <div class="stat"><span class="stat-number">Live</span><span class="stat-label">Open Routing</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Calculator -->
+  <section class="calculator-section">
+    <div class="container">
+      <div class="calculator-card">
+        <h2><i class="fas fa-calculator"></i> Toll Calculator (India)</h2>
+        <div class="search-form">
+          <div class="input-group">
+            <i class="fas fa-map-marker-alt"></i>
+            <input type="text" id="fromInput" placeholder="From city (e.g., Delhi)" autocomplete="off" />
+          </div>
+          <div class="input-group">
+            <i class="fas fa-flag-checkered"></i>
+            <input type="text" id="toInput" placeholder="To city (e.g., Jaipur)" autocomplete="off" />
+          </div>
+          <div class="input-group">
+            <i class="fas fa-car"></i>
+            <select id="vehicleType">
+              <option value="car">Car / Jeep / Van</option>
+              <option value="truck">Bus / Truck</option>
+              <option value="lcv">LCV (Light Commercial)</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <i class="fas fa-road"></i>
+            <select id="avoidTolls">
+              <option value="false">Use fastest route</option>
+              <option value="true">Avoid tolls (save money)</option>
+            </select>
+          </div>
+          <button id="calculateBtn" class="btn-primary">
+            <i class="fas fa-search"></i> Calculate Route
+          </button>
+        </div>
+      </div>
+
+      <div id="loading" class="loading" style="display:none;">
+        <div class="spinner"></div>
+        <p>Fetching route &amp; estimating tolls…</p>
+      </div>
+      <div id="results"></div>
+    </div>
+  </section>
+
+  <!-- Popular Routes -->
+  <section class="container popular-section">
+    <h2 class="section-title"><i class="fas fa-star"></i> Popular Routes (Instant Demo)</h2>
+    <div class="routes-grid" id="popularRoutes"></div>
+  </section>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeLoginModal">&times;</span>
+      <h2><i class="fas fa-user-circle"></i> Login / Sign Up</h2>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Email address" required />
+        <input type="password" id="loginPassword" placeholder="Password" required />
+        <button type="submit" class="btn-primary">Login</button>
+        <p class="modal-note">Demo: any email · password: <strong>demo123</strong><br/>Admin: admin@tollguru.com / demo123</p>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 TollGuru India · Affiliated by LUKEA · Drive smart 🚗</p>
+    </div>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- FIX: Polyline decoder required for OSRM encoded geometry -->
+  <script src="https://unpkg.com/@mapbox/polyline@1.1.1/src/polyline.js"></script>
+
+  <script>
+    'use strict';
+    let currentUser = null;
+    let mapInstance = null;
+    let currentRouteLayer = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('calculateBtn').addEventListener('click', calculateRealRoute);
+      document.getElementById('authBtn').addEventListener('click', () => showModal('loginModal'));
+      document.getElementById('closeLoginModal').addEventListener('click', () => closeModal('loginModal'));
+      document.getElementById('loginForm').addEventListener('submit', handleLogin);
+      window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) e.target.style.display = 'none';
+      });
+      loadPopularRoutes();
+      checkAuthStatus();
+    });
+
+    function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    /* ── Geocode via Nominatim (FIX: removed User-Agent header — not allowed by browsers) ── */
+    async function geocode(city) {
+      const url = 'https://nominatim.openstreetmap.org/search?q=' +
+        encodeURIComponent(city + ', India') + '&format=json&limit=1&countrycodes=in';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Geocoding service unavailable. Try again.');
+      const data = await response.json();
+      if (!data || data.length === 0) throw new Error('Could not find location: "' + city + '". Try a major city name.');
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), name: data[0].display_name };
+    }
+
+    /* ── OSRM Routing ── */
+    async function getRoute(from, to) {
+      const url = 'https://router.project-osrm.org/route/v1/driving/' +
+        from.lng + ',' + from.lat + ';' + to.lng + ',' + to.lat +
+        '?overview=full&geometries=polyline';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Routing service unavailable. Try again.');
+      const data = await response.json();
+      if (!data.routes || data.routes.length === 0) throw new Error('No route found between these cities.');
+      return {
+        distanceKm: data.routes[0].distance / 1000,
+        durationMin: data.routes[0].duration / 60,
+        geometry: data.routes[0].geometry
+      };
+    }
+
+    /* ── Toll calculation (realistic Indian rates) ── */
+    function calculateToll(distanceKm, vehicleType, avoidTolls) {
+      const rates = { car: 0.95, truck: 2.80, lcv: 1.75 };
+      const rate = rates[vehicleType] || 0.95;
+      let cost = distanceKm * rate;
+      if (avoidTolls === 'true') cost *= 0.3;
+      return Math.round(cost);
+    }
+
+    const PLAZA_NAMES = [
+      'Kundli', 'Khekra', 'Palwal', 'Dausa', 'Lonavala',
+      'Kolar', 'Sriperumbudur', 'Pinjore', 'Zirakpur', 'Gurgaon'
+    ];
+
+    function generateTollBreakdown(distanceKm, tollCost, avoidTolls) {
+      if (avoidTolls === 'true') return [{ name: 'No toll roads (avoidance enabled)', price: tollCost }];
+      const numPlazas = Math.max(1, Math.floor(distanceKm / 50));
+      const base = Math.floor(tollCost / numPlazas);
+      const tolls = [];
+      let remaining = tollCost;
+      for (let i = 1; i <= numPlazas; i++) {
+        const price = (i === numPlazas) ? remaining : base;
+        tolls.push({
+          name: PLAZA_NAMES[i % PLAZA_NAMES.length] + ' Toll Plaza (km ' + Math.floor(i * distanceKm / numPlazas) + ')',
+          price: price > 0 ? price : 10
+        });
+        remaining -= base;
+      }
+      return tolls;
+    }
+
+    /* ── Main calculator ── */
+    async function calculateRealRoute() {
+      const from = document.getElementById('fromInput').value.trim();
+      const to = document.getElementById('toInput').value.trim();
+      const vehicleType = document.getElementById('vehicleType').value;
+      const avoidTolls = document.getElementById('avoidTolls').value;
+
+      if (!from || !to) { alert('Please enter both source and destination cities.'); return; }
+
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('results').innerHTML = '';
+
+      try {
+        const [fromCoord, toCoord] = await Promise.all([geocode(from), geocode(to)]);
+        const routeData = await getRoute(fromCoord, toCoord);
+
+        const distance = routeData.distanceKm;
+        const duration = routeData.durationMin;
+        const tollCost = calculateToll(distance, vehicleType, avoidTolls);
+        const fuelEstimate = Math.round(distance * 0.75); // ~₹0.75/km petrol estimate
+        const tolls = generateTollBreakdown(distance, tollCost, avoidTolls);
+
+        const tollRows = tolls.map(t =>
+          '<div class="toll-item"><div>' + t.name + '</div><div class="toll-price">₹' + t.price + '</div></div>'
+        ).join('');
+
+        const hrs = Math.floor(duration / 60);
+        const mins = Math.round(duration % 60);
+        const timeStr = hrs > 0 ? hrs + 'h ' + mins + 'm' : mins + ' min';
+
+        document.getElementById('results').innerHTML =
+          '<div class="result-card">' +
+            '<div class="summary-grid">' +
+              '<div class="summary-item"><span class="label">Total Toll Cost</span><span class="value">₹' + tollCost + '</span></div>' +
+              '<div class="summary-item"><span class="label">Distance</span><span class="value">' + distance.toFixed(1) + ' km</span></div>' +
+              '<div class="summary-item"><span class="label">Est. Time</span><span class="value">' + timeStr + '</span></div>' +
+              '<div class="summary-item"><span class="label">Est. Fuel</span><span class="value">₹' + fuelEstimate + '</span></div>' +
+            '</div>' +
+            '<p class="breakdown-title"><i class="fas fa-toll"></i> Toll Breakdown (' + tolls.length + ' plazas)</p>' +
+            tollRows +
+            '<div class="badge-save"><i class="fas fa-leaf"></i> <strong>Smart tip:</strong> "Avoid tolls" reduces toll cost by ~70% but may add distance &amp; time.</div>' +
+            '<div class="map-container" id="routeMap"></div>' +
+            '<div class="save-btn-wrap"><button class="btn-primary" onclick="handleSaveTrip()" style="max-width:220px;"><i class="fas fa-save"></i> Save This Trip</button></div>' +
+          '</div>';
+
+        renderMap(routeData.geometry, fromCoord, toCoord);
+
+        window.lastTripData = {
+          from: from, to: to,
+          totalCost: tollCost,
+          distance: distance.toFixed(1),
+          tollsCount: tolls.length,
+          timestamp: new Date().toISOString()
+        };
+
+        if (currentUser) saveTripToLocalStorage(window.lastTripData);
+
+      } catch (err) {
+        document.getElementById('results').innerHTML =
+          '<div class="error-card"><i class="fas fa-exclamation-triangle"></i> ' + err.message + '</div>';
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    /* ── Map rendering (FIX: using @mapbox/polyline to decode OSRM geometry) ── */
+    function renderMap(encodedPolyline, fromCoord, toCoord) {
+      const mapDiv = document.getElementById('routeMap');
+      if (!mapDiv) return;
+      if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+
+      mapInstance = L.map(mapDiv).setView([20.5937, 78.9629], 5);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
+      }).addTo(mapInstance);
+
+      try {
+        // FIX: Use @mapbox/polyline (loaded above) to decode the encoded geometry
+        const decoded = polyline.decode(encodedPolyline); // returns [[lat,lng], ...]
+        if (decoded && decoded.length > 0) {
+          const latlngs = decoded.map(p => [p[0], p[1]]);
+          currentRouteLayer = L.polyline(latlngs, { color: '#5b4fcf', weight: 5, opacity: 0.85 }).addTo(mapInstance);
+          mapInstance.fitBounds(currentRouteLayer.getBounds(), { padding: [20, 20] });
+        } else throw new Error('empty polyline');
+      } catch (e) {
+        // Fallback: straight dashed line between coords
+        currentRouteLayer = L.polyline(
+          [[fromCoord.lat, fromCoord.lng], [toCoord.lat, toCoord.lng]],
+          { color: '#5b4fcf', weight: 4, dashArray: '8,6' }
+        ).addTo(mapInstance);
+        mapInstance.fitBounds(currentRouteLayer.getBounds(), { padding: [30, 30] });
+      }
+
+      const icon = L.divIcon({ className: '', html: '<div style="background:#5b4fcf;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>' });
+      L.marker([fromCoord.lat, fromCoord.lng], { icon }).addTo(mapInstance).bindPopup('<b>Start:</b> ' + fromCoord.name.split(',')[0]);
+      L.marker([toCoord.lat, toCoord.lng], { icon }).addTo(mapInstance).bindPopup('<b>Destination:</b> ' + toCoord.name.split(',')[0]);
+    }
+
+    /* ── Storage ── */
+    function saveTripToLocalStorage(trip) {
+      if (!currentUser) return;
+      try {
+        const key = 'trips_' + currentUser.email;
+        const trips = JSON.parse(localStorage.getItem(key) || '[]');
+        trips.unshift(trip); // newest first
+        if (trips.length > 50) trips.pop(); // cap at 50
+        localStorage.setItem(key, JSON.stringify(trips));
+      } catch (e) { console.warn('Storage error:', e); }
+    }
+
+    window.handleSaveTrip = function () {
+      if (!currentUser) { showModal('loginModal'); return; }
+      if (window.lastTripData) {
+        saveTripToLocalStorage(window.lastTripData);
+        alert('Trip saved! View it in your Dashboard.');
+      }
+    };
+
+    /* ── Auth ── */
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const pwd = document.getElementById('loginPassword').value;
+      if (pwd === 'demo123') {
+        currentUser = { email };
+        localStorage.setItem('tollguru_user', JSON.stringify(currentUser));
+        closeModal('loginModal');
+        document.getElementById('authBtn').innerHTML = '<i class="fas fa-user"></i> ' + email.split('@')[0];
+        if (email === 'admin@tollguru.com') document.getElementById('adminLink').style.display = 'inline';
+      } else {
+        alert('Incorrect password. Use: demo123');
+      }
+    }
+
+    function checkAuthStatus() {
+      try {
+        const saved = localStorage.getItem('tollguru_user');
+        if (saved) {
+          currentUser = JSON.parse(saved);
+          document.getElementById('authBtn').innerHTML = '<i class="fas fa-user"></i> ' + currentUser.email.split('@')[0];
+          if (currentUser.email === 'admin@tollguru.com') document.getElementById('adminLink').style.display = 'inline';
+        }
+      } catch (e) { localStorage.removeItem('tollguru_user'); }
+    }
+
+    /* ── Popular Routes ── */
+    function loadPopularRoutes() {
+      const routes = [
+        ['Delhi', 'Jaipur'], ['Mumbai', 'Pune'], ['Delhi', 'Chandigarh'],
+        ['Bengaluru', 'Chennai'], ['Kolkata', 'Digha'], ['Hyderabad', 'Vijayawada']
+      ];
+      document.getElementById('popularRoutes').innerHTML = routes.map(r =>
+        '<div class="route-card" onclick="quickRoute(\'' + r[0] + '\',\'' + r[1] + '\')">' +
+          '<i class="fas fa-route"></i>' + r[0] + ' → ' + r[1] +
+          '<small>Click for live toll</small>' +
+        '</div>'
+      ).join('');
+    }
+
+    window.quickRoute = function (from, to) {
+      document.getElementById('fromInput').value = from;
+      document.getElementById('toInput').value = to;
+      calculateRealRoute();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  </script>
+</body>
+</html>
